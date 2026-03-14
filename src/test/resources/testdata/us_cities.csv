@@ -1,0 +1,61 @@
+city_id,city_name,state_code,country_code,country_full,lat,lon
+4059229,Dozier,AL,US,United States,31.49211,-86.36496
+4047424,East Camden,AR,US,United States,33.60789,-92.74016
+4138011,Chevy Chase,DC,US,United States,38.964,-77.06776
+4141246,Arden,DE,US,United States,39.80928,-75.48659
+4141249,Ardentown,DE,US,United States,39.80845,-75.48298
+4141443,Bethel,DE,US,United States,39.23428,-75.58159
+4141444,Bethel,DE,US,United States,38.57067,-75.61937
+4143408,Little Creek,DE,US,United States,39.16706,-75.44825
+4143506,Magnolia,DE,US,United States,39.07122,-75.47603
+4145151,Viola,DE,US,United States,39.04289,-75.57187
+4145471,Woodside,DE,US,United States,39.0715,-75.56826
+4047852,Matlacha,FL,US,United States,26.6298,-82.07092
+4145765,Alford,FL,US,United States,30.6938,-85.39215
+4145945,Altha,FL,US,United States,30.57047,-85.12714
+4146051,Andrews,FL,US,United States,29.53293,-82.88169
+4146245,Aripeka,FL,US,United States,28.43222,-82.66427
+4146395,Aucilla,FL,US,United States,30.47993,-83.75433
+4146736,Bascom,FL,US,United States,30.92797,-85.11854
+4146844,Bay Lake,FL,US,United States,28.38862,-81.56591
+4048084,Lenox,GA,US,United States,31.27158,-83.46488
+4179253,Ailey,GA,US,United States,32.1874,-82.56569
+4048270,LaPlace,IL,US,United States,39.80004,-88.71757
+4232522,Addieville,IL,US,United States,38.39144,-89.49009
+4048466,Severance,KS,US,United States,39.76722,-95.24998
+4048468,Prairie View,KS,US,United States,39.83251,-99.57261
+4048446,Fairview,KY,US,United States,36.84338,-87.30389
+4048512,Chaplin,KY,US,United States,37.89784,-85.22134
+4048514,Broeck Pointe,KY,US,United States,38.29563,-85.58607
+4048794,Dixie Inn,LA,US,United States,32.59515,-93.3385
+4048920,Sun,LA,US,United States,30.64908,-89.89257
+4049008,Ernstville,MD,US,United States,39.63287,-78.02667
+4049018,Fairview,MD,US,United States,39.71232,-77.84305
+4049046,McCoole,MD,US,United States,39.44648,-78.97225
+4049120,Amoret,MO,US,United States,38.2553,-94.58773
+4049182,Cowgill,MO,US,United States,39.55918,-93.92688
+4049194,Gordonville,MO,US,United States,37.31116,-89.67926
+4049312,Prathersville,MO,US,United States,39.0181,-92.32185
+4049714,Faith,NC,US,United States,35.58708,-80.46284
+4049858,Polkville,NC,US,United States,35.41763,-81.64287
+4049908,Vass,NC,US,United States,35.25627,-79.28225
+4049950,Waves,NC,US,United States,35.56685,-75.46849
+4050166,Dale,OK,US,United States,35.39007,-97.04503
+4050172,Christie,OK,US,United States,35.95814,-94.69023
+4050178,Cole,OK,US,United States,35.10229,-97.57281
+4050296,Watts,OK,US,United States,36.10925,-94.57022
+4601167,Williamston,SC,US,United States,34.61845,-82.47791
+4601196,Williston,SC,US,United States,33.40265,-81.42011
+5764369,Eagle Butte,SD,US,United States,45.00248,-101.23349
+5764864,Fort Pierre,SD,US,United States,44.35359,-100.37374
+5767144,Mission,SD,US,United States,43.30584,-100.65819
+4050834,Slayden,TN,US,United States,36.29478,-87.47029
+4046434,New Falcon,TX,US,United States,26.63866,-99.09559
+4046474,Rankin,TX,US,United States,32.2057,-96.70666
+4046538,South Toledo Bend,TX,US,United States,31.15324,-93.60462
+4050916,Beasley,TX,US,United States,29.49746,-95.91801
+4046734,Hallwood,VA,US,United States,37.87763,-75.58909
+4046820,Nelsonia,VA,US,United States,37.81985,-75.58715
+4046890,Sperryville,VA,US,United States,38.65707,-78.22611
+4047028,Hambleton,WV,US,United States,39.08205,-79.64534
+4047094,New Richmond,WV,US,United States,37.57011,-81.48872

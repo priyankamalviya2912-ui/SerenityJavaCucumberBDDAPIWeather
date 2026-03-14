@@ -1,0 +1,53 @@
+target/
+build
+.settings/
+.project
+.classpath
+.vscode
+drivers/
+out
+.gradle
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.idea
+*.iml
+.DS_Store
+
+# Build folders
+/target/
+/build/
+
+# IDE settings
+.settings/
+.classpath
+.project
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+
+# Serenity reports
+/site/
+.serenity/
+
+# Environment files
+.env
+
+# Claude / AI config (not needed in repo)
+.claude/
+
+# Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
+!/.mvn/wrapper/maven-wrapper.jar
