@@ -1,16 +1,21 @@
 package api.steps;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.opencsv.exceptions.CsvValidationException;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.*;
+import net.serenitybdd.annotations.Steps;
 import net.serenitybdd.core.Serenity;
 import net.serenitybdd.rest.SerenityRest;
 import io.restassured.response.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,10 +28,13 @@ import utils.ReportUtils;
 
 public class ApiStepDefinition {
 
+    private static final Logger log = LoggerFactory.getLogger(ApiStepDefinition.class);
+
     private String cityIdList;
     private List<String> expectedCityNames;
     private Response response;
 
+    @Steps
     WeatherApi weatherApi;
 
     @Given("I have a list of major international City IDs:")
@@ -34,10 +42,12 @@ public class ApiStepDefinition {
         List<Map<String, String>> rows = dataTable.asMaps(String.class, String.class);
         this.cityIdList = rows.stream().map(row -> row.get("city_id")).collect(Collectors.joining(","));
         this.expectedCityNames = rows.stream().map(row -> row.get("city_name")).collect(Collectors.toList());
+        log.info("City IDs to query: {}", cityIdList);
     }
 
     @When("I request the current weather from Weatherbit")
     public void i_request_current_weather() {
+        log.info("Requesting current weather for city IDs: {}", cityIdList);
         response = weatherApi.getWeatherByCityIds(cityIdList);
     }
 
@@ -58,6 +68,7 @@ public class ApiStepDefinition {
         }
 
         if (!missingCities.isEmpty()) {
+            log.warn("Missing cities in response: {}", missingCities);
             Serenity.recordReportData().withTitle("MISSING CITIES DETECTED")
                     .andContents("The following cities were not found: " + missingCities);
         }
@@ -72,6 +83,7 @@ public class ApiStepDefinition {
 
     @When("I fetch weather data for coordinates Latitude {double} and Longitude {double}")
     public void fetchWeatherByCoordinates(Double lat, Double lon) {
+        log.info("Fetching weather for coordinates: lat={}, lon={}", lat, lon);
         response = weatherApi.getWeatherByCoords(lat, lon);
     }
 
@@ -86,13 +98,16 @@ public class ApiStepDefinition {
         assertThat("Count field should be 1", count, equalTo(1));
 
         CityWeather city = weatherList.get(0);
+        log.info("Coordinate search result: {}", city.getCityName());
         Serenity.recordReportData().withTitle("Coordinate Search Result")
                 .andContents(ReportUtils.buildCoordinateReport(city));
     }
 
     @When("I fetch current weather for all cities in {string}")
-    public void fetchWeatherFromJsonFile(String fileName) throws Exception {
+    public void fetchWeatherFromJsonFile(String fileName) throws IOException {
+        log.info("Loading city IDs from JSON file: {}", fileName);
         String joinedIds = FileUtils.getCityIdsFromJson(fileName);
+        log.info("City IDs loaded: {}", joinedIds);
         weatherApi.getWeatherByCityIds(joinedIds);
     }
 
@@ -104,14 +119,16 @@ public class ApiStepDefinition {
                 .max(Comparator.comparing(CityWeather::getTemp))
                 .orElseThrow(() -> new RuntimeException("No data found"));
 
+        log.info("Warmest city identified: {} at {}°C", warmestCity.getCityName(), warmestCity.getTemp());
         Serenity.recordReportData().withTitle("Australian Capitals Temperature Analysis")
                 .andContents(ReportUtils.buildWarmestCityReport(warmestCity));
     }
 
     @When("I identify the coldest US state using the metadata in {string}")
-    public void identifyColdestFromCSV(String fileName) throws Exception {
+    public void identifyColdestFromCSV(String fileName) throws IOException, CsvValidationException {
+        log.info("Loading US state city IDs from CSV file: {}", fileName);
         List<String> cityIds = FileUtils.getUsStateCityIdsFromCsv(fileName, 30);
-        System.out.println("Total US States identified from metadata: " + cityIds.size());
+        log.info("Total US states identified from metadata: {}", cityIds.size());
         response = weatherApi.getWeatherByCityIds(String.join(",", cityIds));
     }
 
@@ -126,6 +143,7 @@ public class ApiStepDefinition {
         String stateCode = response.jsonPath().getString(
                 "data.find { it.city_name == '" + coldest.getCityName() + "' }.state_code");
 
+        log.info("Coldest state: {} ({}) at {}°C", stateCode, coldest.getCityName(), coldest.getTemp());
         Serenity.recordReportData()
                 .withTitle("Logistics Intelligence: Coldest US State")
                 .andContents(ReportUtils.buildColdestStateReport(coldest, stateCode));
