@@ -233,6 +233,91 @@ api.retry.delay.ms  = 2000
 
 ## Phase 5 — CI/CD Pipeline (Medium Term)
 
+### 4.2 Batch Processing for Large City ID Requests
+
+**Current state:**
+
+`WeatherApi.getWeatherByCityIds()` sends all city IDs in a single API call as a comma-separated query parameter:
+
+```java
+SerenityRest.given()
+        .queryParam("cities", cityIdList)  // e.g. "2147714,5128581,2643743,..."
+        .when().get("/current");
+```
+
+The Weatherbit API enforces a limit of **20 city IDs per request**. If more than 20 IDs are passed (which can happen in AC4 when `Map<String, List<String>>` is implemented and collects all cities across 30+ US states), the API silently truncates or rejects the excess — meaning some cities are never queried and the results are incomplete without any error being raised.
+
+**Why this matters for AC4 specifically:**
+
+Once AC4 is improved to use `Map<String, List<String>>` (roadmap item 1.2), the number of city IDs passed to the API will grow significantly — potentially 60–100 IDs for 30 states with multiple cities each. Without batching, the request will silently drop cities beyond the 20-ID limit.
+
+**Planned change:**
+
+Add a `getBatchedWeatherByCityIds()` method in `WeatherApi` that transparently partitions the city ID list into chunks of 20, makes one API call per chunk, and merges all `CityWeather` results into a single combined list:
+
+```java
+private static final int BATCH_SIZE = 20;
+
+@Step("Fetching current weather in batches for {0} city IDs")
+public List<CityWeather> getBatchedWeatherByCityIds(List<String> allCityIds) {
+    List<CityWeather> allResults = new ArrayList<>();
+    List<List<String>> batches = partition(allCityIds, BATCH_SIZE);
+
+    log.info("Sending {} city IDs in {} batch(es) of up to {}",
+            allCityIds.size(), batches.size(), BATCH_SIZE);
+
+    for (int i = 0; i < batches.size(); i++) {
+        String joinedIds = String.join(",", batches.get(i));
+        log.debug("Batch {}/{}: {}", i + 1, batches.size(), joinedIds);
+        Response batchResponse = SerenityRest.given()
+                .queryParam("cities", joinedIds)
+                .when().get("/current");
+        batchResponse.then().statusCode(200);
+        allResults.addAll(batchResponse.jsonPath().getList("data", CityWeather.class));
+    }
+
+    log.info("Total cities retrieved across all batches: {}", allResults.size());
+    return allResults;
+}
+
+private static <T> List<List<T>> partition(List<T> list, int size) {
+    List<List<T>> partitions = new ArrayList<>();
+    for (int i = 0; i < list.size(); i += size) {
+        partitions.add(list.subList(i, Math.min(i + size, list.size())));
+    }
+    return partitions;
+}
+```
+
+**How the step definitions change:**
+
+The batching is **transparent to the Gherkin layer** — the feature file and step text do not change. Only the step method switches from calling the single-call method to the batched one when the list exceeds the threshold:
+
+```java
+@When("I identify the coldest US state using the metadata in {string}")
+public void identifyColdestFromCSV(String fileName) throws IOException, CsvValidationException {
+    List<String> cityIds = FileUtils.getUsStateCityIdsFromCsv(fileName, 30);
+    log.info("Total city IDs to query: {}", cityIds.size());
+
+    if (cityIds.size() > BATCH_SIZE) {
+        log.info("City ID count exceeds batch limit — switching to batched requests");
+        combinedWeatherList = weatherApi.getBatchedWeatherByCityIds(cityIds);
+    } else {
+        response = weatherApi.getWeatherByCityIds(String.join(",", cityIds));
+    }
+}
+```
+
+**Serenity report visibility:**
+
+Each batch call is a separate `@Step`, so the Serenity report shows every batch individually — the request, the response, and how many cities were returned per batch — giving full transparency into what was queried.
+
+**Impact:** Removes the silent data loss that occurs when more than 20 city IDs are passed in one request. AC4 and any future large-scale scenarios work correctly regardless of how many cities are collected from test data files. The batching logic is centralised in `WeatherApi` and invisible to feature files and step definitions.
+
+---
+
+
+
 ### 5.1 Automated Pipeline with GitHub Actions
 
 **Current state:**
@@ -296,4 +381,5 @@ jobs:
 | 2 | Boundary and edge case testing | Low | Medium |
 | 3 | JSON Schema validation | Medium | High |
 | 4 | Retry mechanism for transient failures | Medium | Medium |
+| 4 | Batch processing for city ID requests > 20 | Medium | High |
 | 5 | CI/CD pipeline with GitHub Actions | Medium | High |
