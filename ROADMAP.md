@@ -316,58 +316,81 @@ Each batch call is a separate `@Step`, so the Serenity report shows every batch 
 
 ---
 
+## Phase 5 — CI/CD Pipeline (Medium Term)
 
-
-### 5.1 Automated Pipeline with GitHub Actions
+### 5.1 Automated Pipeline with Bitbucket Pipelines
 
 **Current state:**
 
 Tests are run manually via `mvn clean verify -Dcucumber.filter.tags="@api"` or the `run-api-tests.bat` script. There is no automated trigger on code changes.
 
-**Planned pipeline (`.github/workflows/api-tests.yml`):**
+**Planned pipeline (`bitbucket-pipelines.yml`):**
 
 ```yaml
-name: API Tests
+image: maven:3.9.6-eclipse-temurin-17
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '0 6 * * *'   # Daily run at 6am UTC
+definitions:
+  steps:
+    - step: &run-api-tests
+        name: Run Weatherbit API Tests
+        caches:
+          - maven
+        script:
+          - mvn clean verify -Dcucumber.filter.tags="@api"
+        artifacts:
+          - target/site/serenity/**
 
-jobs:
-  api-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+pipelines:
+  default:
+    - step: *run-api-tests
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+  branches:
+    main:
+      - step: *run-api-tests
 
-      - name: Run API Tests
-        env:
-          WEATHERBIT_API_KEY: ${{ secrets.WEATHERBIT_API_KEY }}
-        run: mvn clean verify -Dcucumber.filter.tags="@api"
+  pull-requests:
+    '**':
+      - step: *run-api-tests
 
-      - name: Upload Serenity Report
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: serenity-report
-          path: target/site/serenity/
+  custom:
+    scheduled-daily-run:
+      - step: *run-api-tests
 ```
 
-**Key points:**
-- `WEATHERBIT_API_KEY` is stored as a GitHub Actions secret — never in code
-- Report is uploaded as a build artifact after every run, pass or fail
-- Scheduled daily run catches API contract changes even without code changes
+**How to store the API key as a Bitbucket secret:**
 
-**Impact:** Every push is validated automatically. The Serenity report is always available without running tests locally.
+1. Go to **Repository Settings → Pipelines → Repository Variables**
+2. Add a variable:
+   - Name: `WEATHERBIT_API_KEY`
+   - Value: your API key
+   - Check **Secured** so it is masked in logs and never visible in plain text
+3. The variable is automatically injected as an environment variable at pipeline runtime
+
+In `serenity.conf` (from roadmap item 1.1):
+```hocon
+api.key = ${?WEATHERBIT_API_KEY}
+```
+
+Serenity reads it at runtime from the environment — no key ever appears in code or pipeline config.
+
+**Pipeline triggers:**
+
+| Trigger | Pipeline Block | When it runs |
+|---|---|---|
+| Any branch push | `default` | Every commit pushed to any branch |
+| Push to `main` | `branches: main` | Every merge or direct push to main |
+| Pull request opened/updated | `pull-requests: **` | Every PR against any branch |
+| Scheduled daily | `custom: scheduled-daily-run` | Configured via **Repository Settings → Pipelines → Schedules** in Bitbucket UI |
+
+**Serenity report as a build artifact:**
+
+The `artifacts` block under the step preserves the full `target/site/serenity/` directory after each pipeline run. It can be downloaded directly from the Bitbucket Pipelines UI for any build — pass or fail.
+
+**Maven cache:**
+
+The `maven` cache entry caches the local `.m2` repository between pipeline runs, avoiding re-downloading all dependencies on every build and significantly reducing pipeline run time.
+
+**Impact:** Every push and every pull request is validated automatically. The Serenity report is always available as a downloadable artifact from Bitbucket. The API key is stored securely as a repository secret and never committed to source control.
 
 ---
 
@@ -382,4 +405,4 @@ jobs:
 | 3 | JSON Schema validation | Medium | High |
 | 4 | Retry mechanism for transient failures | Medium | Medium |
 | 4 | Batch processing for city ID requests > 20 | Medium | High |
-| 5 | CI/CD pipeline with GitHub Actions | Medium | High |
+| 5 | CI/CD pipeline with Bitbucket Pipelines | Medium | High |
